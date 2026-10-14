@@ -3,14 +3,38 @@ import { Link } from 'react-router-dom';
 import View from './view';
 import { pizzaService } from '../service/service';
 import { Order, OrderHistory, Role, User } from '../service/pizzaService';
+import { CloseIcon } from '../icons';
 
 interface Props {
   user: User | null;
+  setUser: (user: User)=> void;
 }
 
 export default function DinerDashboard(props: Props) {
   const user = props.user || ({} as User);
   const [orders, setOrders] = React.useState<Order[]>([]);
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const nameRef = React.useRef<HTMLInputElement>(null);
+  const emailRef = React.useRef<HTMLInputElement>(null);
+  const passwordRef = React.useRef<HTMLInputElement>(null);
+
+  async function updateUser() {
+    const updatedUser: User = {
+      id: user.id,
+      name: nameRef.current?.value,
+      email: emailRef.current?.value,
+      password: passwordRef.current?.value || undefined,
+      roles: user.roles,
+    };
+
+    try {
+      const savedUser = await pizzaService.updateUser(updatedUser);
+      props.setUser(savedUser);
+      setIsEditOpen(false);
+    } catch {
+      // Keep the dialog open so the user can correct or retry the update.
+    }
+  }
 
   React.useEffect(() => {
     (async () => {
@@ -35,6 +59,9 @@ export default function DinerDashboard(props: Props) {
         <div className="hs-tooltip inline-block">
           <img className="hs-tooltip-toggle relative inline-block size-[96px] rounded-full ring-2 ring-white hover:z-10" src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=facearea&facepad=2&w=300&h=300&q=80" alt="Employee stock photo" />
         </div>
+        <button type="button" className="ml-4 px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600"
+        onClick={() => setIsEditOpen(true)}
+        > Edit</button>
 
         <div className="my-4 text-lg text-orange-200 text-start grid grid-cols-5 gap-2">
           <div className="font-semibold text-orange-400">name:</div> <div className="col-span-4">{user.name}</div>
@@ -99,6 +126,71 @@ export default function DinerDashboard(props: Props) {
           </>
         )}
       </div>
+      <div
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="dialog-title"
+  id="hs-jwt-modal"
+  className={`${isEditOpen ? '' : 'hidden'} size-full fixed top-10 start-0 z-[80] overflow-x-hidden overflow-y-auto`}
+>
+  <div className="sm:max-w-lg sm:w-full m-3 sm:mx-auto min-h-[calc(100%-3.5rem)]">
+    <div className="w-full flex flex-col bg-white border shadow-sm rounded-xl">
+      <div className="flex justify-between items-center py-3 px-4 border-b bg-slate-200 rounded-t-xl">
+        <h3 id="dialog-title" className="font-bold text-gray-800">
+          Edit user
+        </h3>
+        <button
+          type="button"
+          aria-label="Close"
+          className="text-gray-800"
+          onClick={() => setIsEditOpen(false)}
+        >
+          <CloseIcon className="size-4"/>
+        </button>
+      </div>
+
+      <div className="p-4">
+        <div className="my-4 text-lg text-start grid grid-cols-5 gap-2 items-center">
+          <label htmlFor="edit-name">Name:</label>
+          <input
+            id="edit-name"
+            type="text"
+            className="col-span-4 border rounded-md p-1"
+            defaultValue={user.name}
+            ref={nameRef}
+          />
+
+          <label htmlFor="edit-email">Email:</label>
+          <input
+            id="edit-email"
+            type="email"
+            className="col-span-4 border rounded-md p-1"
+            defaultValue={user.email}
+            ref={emailRef}
+          />
+
+          <label htmlFor="edit-password">Password:</label>
+          <input
+            id="edit-password"
+            type="password"
+            className="col-span-4 border rounded-md p-1"
+            ref={passwordRef}
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-end p-4 border-t bg-slate-200">
+        <button
+          type="button"
+          className="px-4 py-2 bg-orange-500 text-white rounded-md"
+          onClick={updateUser}
+        >
+          Update
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
     </View>
   );
 }
