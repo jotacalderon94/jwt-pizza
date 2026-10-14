@@ -175,7 +175,7 @@ test('admin manages franchises and stores', async ({ page }) => {
   await expect(page.getByRole('main')).toContainText('PizzaCorp');
 
   await page.getByPlaceholder('Filter franchises').fill('Pizza');
-  await page.getByRole('button', { name: 'Submit' }).click();
+  await page.getByPlaceholder('Filter franchises').locator('..').getByRole('button', { name: 'Submit' }).click();
   await expect(page.getByRole('main')).toContainText('PizzaCorp');
 
   await page.getByRole('button', { name: 'Add Franchise' }).click();
